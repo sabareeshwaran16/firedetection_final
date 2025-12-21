@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Image Detection - Fire Detection System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1> Image Detection</h1>
+    <p>Upload images for instant fire and smoke detection</p>
+</div>
+
+<!-- Upload Section -->
+<div class="card">
+    <div class="card-content">
+        <form id="uploadForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">☁️</div>
+                    <div class="upload-text">
+                        <h3>Drop your image here</h3>
+                        <p>or click to browse (JPG, PNG, GIF)</p>
+                    </div>
+                    <input type="file" id="imageFile" name="image" accept="image/*">
+                </div>
+                <div id="preview" style="margin-top: 2rem;"></div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary">
+                        🔍 Detect Fire & Smoke
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results Section -->
+<div id="results" class="results-section"></div>
+
+{% comment %} <!-- Instructions -->
+<div class="card">
+    <div class="card-content">
+        <h2>ℹ️ How It Works</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+                <h3 style="color: var(--secondary-color); margin-bottom: 0.5rem;">1. Upload</h3>
+                <p>Select or drag & drop an image file (JPG, PNG, etc.)</p>
+            </div>
+            <div>
+                <h3 style="color: var(--secondary-color); margin-bottom: 0.5rem;">2. Analyze</h3>
+                <p>AI model processes the image for fire/smoke detection</p>
+            </div>
+            <div>
+                <h3 style="color: var(--secondary-color); margin-bottom: 0.5rem;">3. Results</h3>
+                <p>View detection results with confidence scores</p>
+            </div>
+            <div>
+                <h3 style="color: var(--secondary-color); margin-bottom: 0.5rem;">4. Save</h3>
+                <p>All detections are automatically logged</p>
+            </div>
+        </div>
+    </div>
+</div> {% endcomment %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialize file upload with drag & drop
+FireDetection.initializeFileUpload('uploadArea', 'imageFile', 'preview');
+
+// Handle form submission
+FireDetection.detectImage('uploadForm', 'results');
+</script>
+{% endblock %}

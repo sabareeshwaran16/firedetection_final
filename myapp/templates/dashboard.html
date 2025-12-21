@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Fire Detection System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1>Fire Detection Dashboard</h1>
+    <p>Real-time AI-powered fire and smoke detection system</p>
+</div>
+
+
+<!-- Quick Actions -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <div class="card">
+        <div class="card-content" style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📷</div>
+            <h2>Image Detection</h2>
+            <p style="margin-bottom: 1.5rem;">Upload images for instant fire and smoke detection</p>
+            <a href="{% url 'image_detect' %}" class="btn btn-primary">Start Detection</a>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-content" style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📹</div>
+            <h2>Live Stream</h2>
+            <p style="margin-bottom: 1.5rem;">Monitor real-time camera feed with live detection</p>
+            <a href="{% url 'video_stream' %}" class="btn btn-primary">Start Stream</a>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-content" style="text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📋</div>
+            <h2>Detection Logs</h2>
+            <p style="margin-bottom: 1.5rem;">View complete history of all detections</p>
+            <a href="{% url 'logs' %}" class="btn btn-primary">View Logs</a>
+        </div>
+    </div>
+</div>
+<!-- Statistics Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">{{ total_detections }}</div>
+        <div class="stat-label">Total Detections</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-value">{{ fire_count }}</div>
+        <div class="stat-label">Fire Detected</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">💨</div>
+        <div class="stat-value">{{ smoke_count }}</div>
+        <div class="stat-label">Smoke Detected</div>
+    </div>
+    {% comment %} <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">Active</div>
+        <div class="stat-label">System Status</div>
+    </div> {% endcomment %}
+</div>
+
+<!-- Recent Detections -->
+<div class="card" style="margin-top: 3rem;">
+    <div class="card-content">
+        <h2>🔔 Recent Detections</h2>
+        {% if recent_logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Confidence</th>
+                        <th>Time</th>
+                         <th>Alert Sent</th> 
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td>
+                            {% if log.detection_type == 'fire' %}
+                                🔥 Fire
+                            {% else %}
+                                💨 Smoke
+                            {% endif %}
+                        </td>
+                        <td>{{ log.confidence|floatformat:1 }}%</td>
+                        <td>{{ log.detected_at|date:"M d, Y H:i:s" }}</td>
+                        <td>
+                            {% if log.alert_sent %}
+                                ✅
+                            {% else %}
+                                ❌
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="text-align: center; color: rgba(234, 234, 234, 0.6); padding: 2rem;">No detections recorded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

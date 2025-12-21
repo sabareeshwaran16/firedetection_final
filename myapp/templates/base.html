@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fire Detection System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">Fire Detection </div>
+            <ul class="nav-links">
+                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'image_detect' %}">Image Detection</a></li>
+                <li><a href="{% url 'video_stream' %}">Live Stream</a></li>
+                <li><a href="{% url 'logs' %}">Logs</a></li>
+                <li style="margin-left: auto;">
+                    <span style="color: var(--secondary-color); margin-right: 1rem;">👤 {{ user.username }}</span>
+                </li>
+                <li><a href="{% url 'logout' %}" style="background: rgba(255, 107, 53, 0.2); padding: 0.5rem 1rem; border-radius: 5px;">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

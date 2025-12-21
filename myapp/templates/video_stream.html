@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}Live Stream - Fire Detection System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1>📹 Real time detection</h1>
+    <p>Real-time fire and smoke detection from camera feed</p>
+</div>
+
+<!-- Main Content Grid -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Video Feed -->
+    <div class="card">
+        <div class="card-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>🎥 Live Feed</h2>
+                <span id="streamStatus" style="color: var(--success-color);">● Live</span>
+            </div>
+            <div class="video-container" id="videoContainer">
+                <img src="{% url 'video_feed' %}" alt="Live Video Feed" style="width: 100%; height: auto;">
+            </div>
+            <div class="video-controls">
+                <button class="btn btn-primary" onclick="location.reload()">
+                    🔄 Refresh Stream
+                </button>
+                <button class="btn btn-secondary" onclick="stopVideoStream('videoContainer', 'streamStatus')">
+                    ⏹️ Stop Stream
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <!-- Live Alerts -->
+        <div class="card">
+            <div class="card-content">
+                <h2>🔔 Live Alerts</h2>
+                <div id="liveAlerts" style="min-height: 150px;">
+                    <p style="text-align: center; color: rgba(234, 234, 234, 0.6); padding: 2rem;">
+                        Monitoring for fire and smoke...
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Stats -->
+        <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-content">
+                <h2>📊 Session Stats</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center; margin-top: 1rem;">
+                    <div>
+                        <div style="font-size: 2rem; color: var(--primary-color);" id="sessionFire">0</div>
+                        <div style="font-size: 0.9rem; color: rgba(234, 234, 234, 0.7);">Fire Detected</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 2rem; color: var(--secondary-color);" id="sessionSmoke">0</div>
+                        <div style="font-size: 0.9rem; color: rgba(234, 234, 234, 0.7);">Smoke Detected</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--card-border);">
+                    <p><strong>Status:</strong> <span style="color: var(--success-color);">Active</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let sessionStartTime = new Date();
+let streamActive = true;
+let lastDetectionId = 0;
+let audioContext = null;
+let sessionFire = 0;
+let sessionSmoke = 0;
+
+function initAudio() {
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('Audio context initialized');
+        } catch (e) {
+            console.log('Audio not supported:', e);
+        }
+    }
+}
+function playAlertSound() {
+    try {
+        if (!audioContext) {
+            initAudio();
+        }
+        
+        if (audioContext) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Create alert sound
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+            
+            console.log('Alert sound played');
+        }
+    } catch (e) {
+        console.error('Error playing sound:', e);
+    }
+}
+
+// Check for new detections and update stats
+function checkForAlerts() {
+    fetch('/api/stats/')
+        .then(response => response.json())
+        .then(data => {
+            // Update counts
+            const fireCount = data.fire_detections || 0;
+            const smokeCount = data.smoke_detections || 0;
+            
+            // Check if there are new detections
+            const hasNewFire = fireCount > sessionFire;
+            const hasNewSmoke = smokeCount > sessionSmoke;
+            
+            // Update session counts
+            sessionFire = fireCount;
+            sessionSmoke = smokeCount;
+            
+            // Update display
+            document.getElementById('sessionFire').textContent = fireCount;
+            document.getElementById('sessionSmoke').textContent = smokeCount;
+            
+            // Check for new alerts
+            if (data.recent_alerts && data.recent_alerts.length > 0) {
+                const latestAlert = data.recent_alerts[0];
+                
+                // If this is a new alert (different from last one)
+                if (latestAlert.id > lastDetectionId) {
+                    lastDetectionId = latestAlert.id;
+                    
+                    // Play alert sound
+                    playAlertSound();
+                    
+                    // Add to live alerts
+                    addLiveAlert(latestAlert.detection_type, latestAlert.confidence);
+                }
+            }
+            
+            console.log('Stats updated:', data);
+        })
+        .catch(error => {
+            console.error('Error checking for alerts:', error);
+        });
+}
+
+// Add live alert to the alerts section
+function addLiveAlert(type, confidence) {
+    const alertsDiv = document.getElementById('liveAlerts');
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US', { hour12: false });
+    
+    const icon = type === 'fire' ? '🔥' : '💨';
+    const color = type === 'fire' ? 'var(--danger-color)' : 'var(--warning-color)';
+    const confidencePercent = confidence.toFixed(1);  // Already in percentage
+    
+    const alertHtml = `
+        <div style="background: rgba(255, 107, 53, 0.1); border-left: 3px solid ${color}; padding: 1rem; margin-bottom: 0.5rem; border-radius: 8px; animation: slideInRight 0.4s ease;">
+            <strong>${icon} ${type.toUpperCase()} DETECTED!</strong><br>
+            <small style="color: rgba(234, 234, 234, 0.7);">Confidence: ${confidencePercent}%</small><br>
+            <small style="color: rgba(234, 234, 234, 0.7);">${time}</small>
+        </div>
+    `;
+    
+    // Clear placeholder text if exists
+    if (alertsDiv.querySelector('p')) {
+        alertsDiv.innerHTML = '';
+    }
+    
+    alertsDiv.innerHTML = alertHtml + alertsDiv.innerHTML;
+    
+    // Keep only last 5 alerts
+    const alerts = alertsDiv.querySelectorAll('div');
+    if (alerts.length > 5) {
+        for (let i = 5; i < alerts.length; i++) {
+            alerts[i].remove();
+        }
+    }
+}
+
+// Initialize audio on first user interaction
+document.addEventListener('click', initAudio, { once: true });
+
+// Start checking for alerts
+setInterval(checkForAlerts, 2000); // Check every 2 seconds
+
+// Initial check
+setTimeout(checkForAlerts, 1000);
+
+// Add to window object for external access
+window.stopVideoStream = FireDetection.stopVideoStream;
+
+console.log('Video stream monitoring started');
+</script>
+{% endblock %}
