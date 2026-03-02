@@ -27,15 +27,12 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from io import BytesIO
 from datetime import datetime
 
-# Load YOLO model
+# Load YOLO model - using lightweight YOLOv8n for low memory
 if YOLO_AVAILABLE:
-    model_path = os.path.join(settings.BASE_DIR.parent, "best.pt")
     try:
-        if os.path.exists(model_path):
-            model = YOLO(model_path)
-        else:
-            model = None
-            print("Warning: YOLO model file not found. Detection features will be disabled.")
+        # Use YOLOv8n (nano) - smallest model, only 6MB
+        model = YOLO('yolov8n.pt')  # Auto-downloads if not present
+        print("YOLOv8n model loaded successfully")
     except Exception as e:
         model = None
         print(f"Error loading YOLO model: {e}")
