@@ -23,7 +23,15 @@ from datetime import datetime
 
 # Load YOLO model
 model_path = os.path.join(settings.BASE_DIR.parent, "best.pt")
-model = YOLO(model_path)
+try:
+    if os.path.exists(model_path):
+        model = YOLO(model_path)
+    else:
+        model = None
+        print("Warning: YOLO model file not found. Detection features will be disabled.")
+except Exception as e:
+    model = None
+    print(f"Error loading YOLO model: {e}")
 
 @login_required(login_url='login')
 def index(request):
@@ -44,6 +52,12 @@ def index(request):
 @login_required(login_url='login')
 def image_detect(request):
     """Image upload detection"""
+    if not model:
+        return JsonResponse({
+            "status": "error",
+            "message": "YOLO model not available. Please contact administrator."
+        })
+    
     if request.method == "POST" and request.FILES.get("image"):
         try:
             uploaded = request.FILES["image"]
