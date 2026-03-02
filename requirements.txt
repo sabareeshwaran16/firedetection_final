@@ -1,0 +1,8 @@
+Django>=4.0
+ultralytics
+opencv-python-headless
+reportlab
+Pillow
+gunicorn
+whitenoise
+psycopg2-binary
