@@ -27,7 +27,7 @@ model = YOLO(model_path)
 
 @login_required(login_url='login')
 def index(request):
-    """Dashboard home page"""
+    """Dashboard ho     sme page"""
     recent_logs = DetectionLog.objects.all()[:5]
     total_detections = DetectionLog.objects.count()
     fire_count = DetectionLog.objects.filter(detection_type='fire').count()
