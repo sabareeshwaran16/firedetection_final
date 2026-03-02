@@ -10,8 +10,14 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
-from ultralytics import YOLO
 from .models import DetectionLog
+
+try:
+    from ultralytics import YOLO
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
+    YOLO = None
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -22,16 +28,20 @@ from io import BytesIO
 from datetime import datetime
 
 # Load YOLO model
-model_path = os.path.join(settings.BASE_DIR.parent, "best.pt")
-try:
-    if os.path.exists(model_path):
-        model = YOLO(model_path)
-    else:
+if YOLO_AVAILABLE:
+    model_path = os.path.join(settings.BASE_DIR.parent, "best.pt")
+    try:
+        if os.path.exists(model_path):
+            model = YOLO(model_path)
+        else:
+            model = None
+            print("Warning: YOLO model file not found. Detection features will be disabled.")
+    except Exception as e:
         model = None
-        print("Warning: YOLO model file not found. Detection features will be disabled.")
-except Exception as e:
+        print(f"Error loading YOLO model: {e}")
+else:
     model = None
-    print(f"Error loading YOLO model: {e}")
+    print("YOLO not available - running in limited mode")
 
 @login_required(login_url='login')
 def index(request):
