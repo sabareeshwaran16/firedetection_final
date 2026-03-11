@@ -1,3 +1,4 @@
+Deployed Link:https://aifiredetection-1.onrender.com/logs/
 # 🔥 Fire Detection System - Modern UI
 
 A beautiful, modern web interface for the fire detection YOLO system with smooth animations and transitions.
